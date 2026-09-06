@@ -1,8 +1,8 @@
 import { google, sheets_v4 } from 'googleapis';
-import dotenv from 'dotenv';
-import path from 'path';
-
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+import {
+  loadServiceAccountCredentials,
+  buildPrivateKey,
+} from './database/credentials';
 
 interface SheetDef {
   name: string;
@@ -58,24 +58,26 @@ const SCHEMA: SheetDef[] = [
   },
 ];
 
-function buildPrivateKey(raw: string | undefined): string {
-  if (!raw) return '';
-  return raw.replace(/\\n/g, '\n').replace(/^"|"$/g, '');
-}
-
 async function main(): Promise<void> {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const key = process.env.GOOGLE_PRIVATE_KEY;
-  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+  let creds;
+  try {
+    creds = loadServiceAccountCredentials();
+  } catch (error) {
+    console.error((error as Error).message);
+    process.exit(1);
+  }
 
-  if (!email || !key || !spreadsheetId) {
-    console.error('Configure GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY e GOOGLE_SPREADSHEET_ID no .env');
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+  if (!spreadsheetId) {
+    console.error(
+      'Configure GOOGLE_SPREADSHEET_ID no .env (ID da planilha)',
+    );
     process.exit(1);
   }
 
   const auth = new google.auth.JWT({
-    email,
-    key: buildPrivateKey(key),
+    email: creds.serviceAccountEmail,
+    key: buildPrivateKey(creds.privateKey),
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 

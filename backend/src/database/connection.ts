@@ -1,40 +1,31 @@
+import path from 'path';
+import dotenv from 'dotenv';
 import { SheetsClient } from './sheets-client';
+import {
+  buildPrivateKey,
+  loadServiceAccountCredentials,
+} from './credentials';
 
-function buildPrivateKey(raw: string | undefined): string {
-  if (!raw) return '';
-  // Suporta chave em uma linha (.env tradicional) e com \n escapado
-  return raw.replace(/\\n/g, '\n').replace(/^"|"$/g, '');
-}
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Variável de ambiente ausente: ${name}`);
-  }
-  return value;
-}
-
-const isConfigured = Boolean(
-  process.env.GOOGLE_SPREADSHEET_ID &&
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
-    process.env.GOOGLE_PRIVATE_KEY,
-);
-
-const db: SheetsClient | null = isConfigured
-  ? new SheetsClient({
-      serviceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!,
-      privateKey: buildPrivateKey(process.env.GOOGLE_PRIVATE_KEY),
-      spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID!,
-    })
-  : null;
-
-export function getDb(): SheetsClient {
-  if (!db) {
+function getSpreadsheetId(): string {
+  const id = process.env.GOOGLE_SPREADSHEET_ID;
+  if (!id) {
     throw new Error(
-      'Google Sheets não configurado. Defina GOOGLE_SPREADSHEET_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL e GOOGLE_PRIVATE_KEY no .env',
+      'Variável de ambiente ausente: GOOGLE_SPREADSHEET_ID. Cole o ID da planilha no backend/.env',
     );
   }
-  return db;
+  return id;
+}
+
+export function getDb(): SheetsClient {
+  const spreadsheetId = getSpreadsheetId();
+  const creds = loadServiceAccountCredentials();
+  return new SheetsClient({
+    serviceAccountEmail: creds.serviceAccountEmail,
+    privateKey: buildPrivateKey(creds.privateKey),
+    spreadsheetId,
+  });
 }
 
 export default getDb;
