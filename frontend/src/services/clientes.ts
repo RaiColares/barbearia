@@ -1,5 +1,13 @@
 import type { Cliente } from "../types.js";
 import { CONFIG } from "../config.js";
+import { httpJson } from "./api.js";
+
+export interface RegistroClienteInput {
+  nome: string;
+  email: string;
+  telefone?: string;
+  senha: string;
+}
 
 function readList(): Cliente[] {
   const raw = localStorage.getItem(CONFIG.clientesKey);
@@ -45,6 +53,23 @@ export function registerCliente(data: {
   };
   writeList([...readList(), cliente]);
   return cliente;
+}
+
+export async function registerClienteRemoto(
+  data: RegistroClienteInput,
+): Promise<{ token: string; userName: string; userEmail: string; role: string }> {
+  return httpJson<{ token: string; userName: string; userEmail: string; role: string }>(
+    "/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        nome: data.nome,
+        email: data.email,
+        telefone: data.telefone,
+        senha: data.senha,
+      }),
+    },
+  );
 }
 
 export function updateCliente(

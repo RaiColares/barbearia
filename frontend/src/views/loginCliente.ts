@@ -1,6 +1,10 @@
 import { $, clearFormErrors, setFieldError } from "../ui/dom.js";
 import { icon } from "../ui/icons.js";
-import { registerCliente, findClienteByEmail } from "../services/clientes.js";
+import {
+  registerCliente as registerClienteLocal,
+  registerClienteRemoto,
+  findClienteByEmail,
+} from "../services/clientes.js";
 import { getSession, loginCliente, redirectForRole } from "../services/auth.js";
 import { loginWithGoogle, promptGoogleIdToken, decodeGoogleProfile } from "../services/googleAuth.js";
 import { showToast } from "../ui/toast.js";
@@ -307,7 +311,7 @@ export function renderLoginCliente(container: HTMLElement): () => void {
       setFieldError(regEmail, "Informe um e-mail válido.");
       valid = false;
     }
-    if (findClienteByEmail(regEmail.value.trim())) {
+    if (isMockMode() && findClienteByEmail(regEmail.value.trim())) {
       setFieldError(regEmail, "Já existe uma conta com este e-mail.");
       valid = false;
     }
@@ -328,12 +332,21 @@ export function renderLoginCliente(container: HTMLElement): () => void {
     regSubmit.disabled = true;
     regSubmit.classList.add("is-loading");
     try {
-      registerCliente({
-        nome: regName.value,
-        email: regEmail.value,
-        telefone: regPhone.value,
-        senha: regPassword.value,
-      });
+      if (isMockMode()) {
+        registerClienteLocal({
+          nome: regName.value,
+          email: regEmail.value,
+          telefone: regPhone.value,
+          senha: regPassword.value,
+        });
+      } else {
+        await registerClienteRemoto({
+          nome: regName.value,
+          email: regEmail.value,
+          telefone: regPhone.value,
+          senha: regPassword.value,
+        });
+      }
       await loginCliente(regEmail.value, regPassword.value);
       showToast("Conta criada com sucesso! Bem-vindo(a).", "success");
       redirectForRole("cliente");

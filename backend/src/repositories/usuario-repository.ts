@@ -119,6 +119,31 @@ export class UsuarioRepository extends SheetsRepository {
       tipo: 'cliente',
       google_id: null,
       avatar_url: null,
+      nome: dados.nome.trim(),
+      telefone: dados.telefone ?? null,
+      created_at: now,
+      updated_at: now,
+    });
+    return usuarioId;
+  }
+
+  async criarUsuarioComSenha(dados: {
+    nome: string;
+    email: string;
+    telefone?: string;
+    senhaHash: string;
+  }): Promise<string> {
+    const now = new Date().toISOString();
+    const usuarioId = crypto.randomUUID();
+    await this.insert({
+      id: usuarioId,
+      email: dados.email.trim().toLowerCase(),
+      senha_hash: dados.senhaHash,
+      tipo: 'cliente',
+      google_id: null,
+      avatar_url: null,
+      nome: dados.nome.trim(),
+      telefone: dados.telefone ?? null,
       created_at: now,
       updated_at: now,
     });

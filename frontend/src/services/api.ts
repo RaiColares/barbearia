@@ -46,10 +46,17 @@ export async function httpJson<T>(path: string, init: RequestInit = {}): Promise
     throw new ApiError("Não foi possível conectar ao servidor.", 0);
   }
   if (!response.ok) {
+    let serverMessage = "";
+    try {
+      const body = (await response.json()) as { message?: string };
+      serverMessage = body.message ?? "";
+    } catch {
+      serverMessage = "";
+    }
     const message =
       response.status === 401 || response.status === 403
         ? "Credenciais inválidas. Verifique e tente novamente."
-        : `Erro na requisição (${response.status}). Tente novamente.`;
+        : serverMessage || `Erro na requisição (${response.status}). Tente novamente.`;
     throw new ApiError(message, response.status);
   }
   return (await response.json()) as T;

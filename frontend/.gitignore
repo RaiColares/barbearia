@@ -4,3 +4,6 @@ js/
 .env
 .env.local
 .env.*.local
+.vercel
+.env.*
+!.env.example

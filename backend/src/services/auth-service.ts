@@ -14,12 +14,16 @@ import {
   obterFuncionarioNome,
   type UsuarioRow,
 } from '../repositories/auth-repository';
+import { criarRepoUsuario } from '../repositories/usuario-repository';
 import type { LoginResponseDTO, UsuarioDTO } from '../dtos/auth-dto';
 import { signAuthToken, AppRole } from '../utils/jwt';
 
 const DEFAULT_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 
 const client = new OAuth2Client(DEFAULT_CLIENT_ID);
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const SENHA_REGEX = /^(?=.*[A-ZÀ-Ü])(?=.*[^A-Za-z0-9À-ÿ\s]).{8,}$/;
 
 export interface GoogleProfile {
   sub: string;
@@ -151,6 +155,66 @@ export async function autenticarComSenha(email: string, senha: string): Promise<
 
 export function gerarSenhaHash(senha: string): Promise<string> {
   return bcrypt.hash(senha, 10);
+}
+
+export async function registrarCliente(data: {
+  nome: string;
+  email: string;
+  telefone?: string;
+  senha: string;
+}): Promise<LoginResponseDTO> {
+  const nome = data.nome.trim();
+  if (nome.length < 3 || !nome.includes(' ')) {
+    throw new ValidationError('Informe seu nome completo');
+  }
+
+  const email = data.email.trim().toLowerCase();
+  if (!EMAIL_REGEX.test(email)) {
+    throw new ValidationError('Informe um e-mail válido');
+  }
+
+  if (!SENHA_REGEX.test(data.senha)) {
+    throw new ValidationError(
+      'A senha deve ter 8+ caracteres, com letra maiúscula e caracter especial',
+    );
+  }
+
+  let telefone: string | undefined;
+  if (data.telefone !== undefined && data.telefone.trim() !== '') {
+    telefone = data.telefone.replace(/\D/g, '');
+    if (telefone.length < 10) {
+      throw new ValidationError('Informe um telefone válido com DDD');
+    }
+  }
+
+  if (await findUsuarioByEmail(email)) {
+    throw new ValidationError('Já existe uma conta com este e-mail');
+  }
+
+  const senhaHash = await gerarSenhaHash(data.senha);
+  const usuarioRepo = await criarRepoUsuario();
+  const usuarioId = await usuarioRepo.criarUsuarioComSenha({
+    nome,
+    email,
+    telefone,
+    senhaHash,
+  });
+  await criarCliente({ usuarioId, nome });
+
+  const usuario: UsuarioRow = {
+    id: usuarioId,
+    email,
+    senha_hash: senhaHash,
+    tipo: 'cliente',
+    google_id: null,
+    avatar_url: null,
+  };
+  const { nome: nomeFinal, cargo } = await obterNomeECargo(usuario);
+
+  return {
+    token: gerarToken(usuario, nomeFinal, cargo),
+    user: buildUsuarioDTO(usuario, nomeFinal, cargo),
+  };
 }
 
 export function gerarTokenInterno(): string {
