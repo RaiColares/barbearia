@@ -12,7 +12,23 @@ import { NotFoundError } from './errors/NotFoundError';
 
 const app = express();
 
-app.use(cors());
+const ALLOWED_ORIGINS: string[] = [
+  'https://barbearia-frontend-ten.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error('Origem não autorizada pelo CORS'));
+    },
+  }),
+);
 app.use(express.json());
 
 app.get('/api/health', async (_req, res) => {
