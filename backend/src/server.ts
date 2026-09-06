@@ -1,0 +1,111 @@
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
+import getDb from './database/connection';
+import servicoRoutes from './rotas/servico-routes';
+import authRoutes from './rotas/auth-routes';
+import { errorHandler } from './middlewares/errorHandler';
+import { NotFoundError } from './errors/NotFoundError';
+
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+
+const app = express();
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
+
+app.use(cors());
+app.use(express.json());
+
+const frontendPath = path.resolve(__dirname, '..', '..', 'frontend');
+app.use(express.static(frontendPath));
+
+app.get('/api/health', async (_req: Request, res: Response) => {
+  try {
+    const db = getDb();
+    const ok = await db.isHealthy();
+    res.json({ status: 'ok', database: ok ? 'connected' : 'disconnected' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', database: 'disconnected' });
+  }
+});
+
+app.get('/api/servicos', async (_req: Request, res: Response) => {
+  try {
+    const { listarServicosAtivos } = await import('./repositories/servico-repository');
+    const servicos = await listarServicosAtivos();
+    res.json(servicos);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar servicos' });
+  }
+});
+
+app.post('/api/auth/login', async (req: Request, res: Response) => {
+  const { email, senha } = req.body;
+
+  if (!email || !senha) {
+    return res.status(400).json({ message: 'Email e senha obrigatorios' });
+  }
+
+  try {
+    const bcrypt = await import('bcrypt');
+    const { findUsuarioByEmail } = await import('./repositories/auth-repository');
+    const { obterClienteNome, obterFuncionarioNome } = await import('./repositories/auth-repository');
+
+    const usuario = await findUsuarioByEmail(email);
+
+    if (!usuario) {
+      return res.status(401).json({ message: 'Credenciais invalidas' });
+    }
+
+    if (!usuario.senha_hash) {
+      return res.status(401).json({ message: 'Credenciais invalidas' });
+    }
+
+    const senhaValida = await bcrypt.default.compare(senha, usuario.senha_hash);
+    if (!senhaValida) {
+      return res.status(401).json({ message: 'Credenciais invalidas' });
+    }
+
+    let nome: string | null = null;
+    let cargo: string | null = null;
+
+    if (usuario.tipo === 'cliente') {
+      nome = await obterClienteNome(usuario.id);
+    } else {
+      const func = await obterFuncionarioNome(usuario.id);
+      nome = func?.nome ?? null;
+      cargo = func?.cargo ?? null;
+    }
+
+    const userData = {
+      id: usuario.id,
+      email: usuario.email,
+      tipo: usuario.tipo,
+      nome,
+      cargo,
+    };
+
+    res.json({ token: 'token_placeholder', user: userData });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao autenticar' });
+  }
+});
+
+app.use('/api/auth', authRoutes);
+app.use('/servicos', servicoRoutes);
+
+app.use('/api/{*path}', (_req: Request, _res: Response, next: NextFunction) => {
+  next(new NotFoundError('Rota não encontrada'));
+});
+
+app.get('/{*path}', (req: Request, res: Response) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  }
+});
+
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
+});

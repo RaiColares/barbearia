@@ -1,0 +1,29 @@
+{
+  "name": "barbearia-maraca-googlesheets",
+  "version": "1.0.0",
+  "description": "SPA de barbearia com Google Sheets como banco de dados",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:RaiColares/barbearia.git"
+  },
+  "keywords": [],
+  "author": "RaiColares",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RaiColares/barbearia/issues"
+  },
+  "homepage": "https://github.com/RaiColares/barbearia#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "husky": "^9.1.7"
+  }
+}
