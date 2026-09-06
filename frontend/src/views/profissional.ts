@@ -414,7 +414,7 @@ export function renderProfissional(container: HTMLElement): () => void {
             return;
           }
           if (wantsPassword && usuarioLogado) {
-            updateUsuarioInterno(usuarioLogado.id, { senha: pwNew });
+            await updateUsuarioInterno(usuarioLogado.id, { senha: pwNew });
           }
           showToast("Alterações salvas.");
           renderConfiguracoes();

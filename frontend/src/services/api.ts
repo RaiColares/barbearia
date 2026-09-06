@@ -16,11 +16,30 @@ export function delay(ms: number): Promise<void> {
 
 export const isMockMode = (): boolean => CONFIG.useMockApi;
 
+function getAuthToken(): string | null {
+  try {
+    const raw = sessionStorage.getItem(CONFIG.sessionKey);
+    if (!raw) return null;
+    const session = JSON.parse(raw) as { token?: string };
+    return session.token ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function httpJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response;
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(init.headers as Record<string, string> | undefined),
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   try {
     response = await fetch(`${CONFIG.apiBaseUrl}${path}`, {
-      headers: { "Content-Type": "application/json" },
+      headers,
       ...init,
     });
   } catch {

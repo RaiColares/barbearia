@@ -1,4 +1,5 @@
 import { CONFIG } from "../config.js";
+import { isMockMode, httpJson } from "./api.js";
 
 export interface AdminProfile {
   id: string;
@@ -9,6 +10,15 @@ export interface AdminProfile {
 }
 
 const LEGACY_ADMIN_KEY = "maraca.v2.demoAdmin";
+
+interface UsuarioAPI {
+  id: string;
+  nome: string;
+  email: string;
+  tipo: string;
+}
+
+let adminsCache: AdminProfile[] | null = null;
 
 function readList(): AdminProfile[] {
   const raw = localStorage.getItem(CONFIG.adminsKey);
@@ -29,10 +39,32 @@ function createId(): string {
   return `ADM-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
-export function listAdmins(): AdminProfile[] {
-  const list = readList();
-  if (list.length > 0) return list;
+function mapFromAPI(api: UsuarioAPI): AdminProfile {
+  return {
+    id: api.id,
+    nome: api.nome || "",
+    email: api.email,
+    senha: "",
+    createdAt: "",
+  };
+}
 
+async function ensureLoaded(): Promise<void> {
+  if (adminsCache) return;
+  if (!isMockMode()) {
+    try {
+      const data = await httpJson<UsuarioAPI[]>("/usuarios");
+      adminsCache = data.map(mapFromAPI);
+      return;
+    } catch {
+      /* fallback abaixo */
+    }
+  }
+  const list = readList();
+  if (list.length > 0) {
+    adminsCache = list;
+    return;
+  }
   const legacyRaw = localStorage.getItem(LEGACY_ADMIN_KEY);
   let migrated: AdminProfile | null = null;
   if (legacyRaw) {
@@ -51,7 +83,6 @@ export function listAdmins(): AdminProfile[] {
       /* ignore */
     }
   }
-
   const seed = migrated ?? {
     id: createId(),
     nome: CONFIG.demoAdmin.name,
@@ -59,11 +90,20 @@ export function listAdmins(): AdminProfile[] {
     senha: CONFIG.demoAdmin.password,
     createdAt: new Date().toISOString(),
   };
+  adminsCache = [seed];
+  if (isMockMode()) {
+    writeList([seed]);
+    localStorage.removeItem(LEGACY_ADMIN_KEY);
+  }
+}
 
-  const profiles = [seed];
-  writeList(profiles);
-  localStorage.removeItem(LEGACY_ADMIN_KEY);
-  return profiles;
+export function listAdmins(): AdminProfile[] {
+  return adminsCache ?? [];
+}
+
+export async function loadAdminsRemote(): Promise<AdminProfile[]> {
+  await ensureLoaded();
+  return listAdmins();
 }
 
 export function findAdminByEmail(email: string): AdminProfile | null {
@@ -77,7 +117,7 @@ export function validateAdminLogin(email: string, senha: string): AdminProfile |
   return admin.senha === senha ? admin : null;
 }
 
-export function createAdmin(data: { nome: string; email: string; senha: string }): AdminProfile {
+export async function createAdmin(data: { nome: string; email: string; senha: string }): Promise<AdminProfile> {
   const admin: AdminProfile = {
     id: createId(),
     nome: data.nome.trim(),
@@ -85,11 +125,27 @@ export function createAdmin(data: { nome: string; email: string; senha: string }
     senha: data.senha,
     createdAt: new Date().toISOString(),
   };
-  writeList([...listAdmins(), admin]);
-  return admin;
+  if (isMockMode()) {
+    writeList([...readList(), admin]);
+    adminsCache = [...listAdmins(), admin];
+    return admin;
+  }
+  const created = await httpJson<UsuarioAPI>("/usuarios", {
+    method: "POST",
+    body: JSON.stringify({
+      nome: admin.nome,
+      email: admin.email,
+      tipo: "admin",
+      password: "admin",
+    }),
+  });
+  const mapped = mapFromAPI(created);
+  mapped.senha = data.senha;
+  adminsCache = [...listAdmins(), mapped];
+  return mapped;
 }
 
-export function updateAdmin(id: string, data: { nome?: string; email?: string; senha?: string }): AdminProfile | null {
+export async function updateAdmin(id: string, data: { nome?: string; email?: string; senha?: string }): Promise<AdminProfile | null> {
   const list = listAdmins();
   const index = list.findIndex((a) => a.id === id);
   if (index < 0) return null;
@@ -100,13 +156,36 @@ export function updateAdmin(id: string, data: { nome?: string; email?: string; s
     email: data.email !== undefined ? data.email.trim().toLowerCase() : current.email,
     senha: data.senha !== undefined ? data.senha : current.senha,
   };
-  list[index] = updated;
-  writeList(list);
-  return updated;
+  if (isMockMode()) {
+    const local = readList().map((a) => (a.id === id ? updated : a));
+    writeList(local);
+    adminsCache = local;
+    return updated;
+  }
+  const body: Record<string, string> = {};
+  if (data.nome !== undefined) body.nome = updated.nome;
+  if (data.email !== undefined) body.email = updated.email;
+  if (data.senha !== undefined) body.password = data.senha;
+  const saved = await httpJson<UsuarioAPI>(`/usuarios/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  const mapped = mapFromAPI(saved);
+  mapped.senha = updated.senha;
+  list[index] = mapped;
+  adminsCache = [...list];
+  return mapped;
 }
 
-export function deleteAdmin(id: string): void {
-  writeList(listAdmins().filter((a) => a.id !== id));
+export async function deleteAdmin(id: string): Promise<void> {
+  if (isMockMode()) {
+    const list = readList().filter((a) => a.id !== id);
+    writeList(list);
+    adminsCache = list;
+    return;
+  }
+  await httpJson(`/usuarios/${id}`, { method: "DELETE" });
+  adminsCache = listAdmins().filter((a) => a.id !== id);
 }
 
 export function isLastAdmin(): boolean {

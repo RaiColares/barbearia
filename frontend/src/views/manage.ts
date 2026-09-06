@@ -1140,7 +1140,7 @@ export function renderManage(container: HTMLElement): () => void {
     });
     if (!confirmed) return;
     const usuario = findByProfessionalId(id);
-    if (usuario) deleteUsuarioInterno(usuario.id);
+    if (usuario) await deleteUsuarioInterno(usuario.id);
     prosCache = prosCache.filter((p) => p.id !== id);
     saveProfessionals(prosCache);
     showToast("Profissional excluído.");
@@ -1240,7 +1240,7 @@ export function renderManage(container: HTMLElement): () => void {
           },
         ];
         saveProfessionals(prosCache);
-        createUsuarioInterno({
+        await createUsuarioInterno({
           nome: name,
           email,
           senha: CONFIG.defaultPassword,

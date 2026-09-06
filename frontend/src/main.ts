@@ -12,8 +12,10 @@ import { renderManage } from "./views/manage.js";
 import { renderProfissional } from "./views/profissional.js";
 import { renderSuperusuario } from "./views/superusuario.js";
 import { ensureSeed } from "./data/seed.js";
+import { ensureCatalogLoaded } from "./services/catalog.js";
+import { CONFIG } from "./config.js";
 
-function init(): void {
+async function init(): Promise<void> {
   ensureSeed();
 
   initTheme();
@@ -50,6 +52,10 @@ function init(): void {
   const appContainer = document.getElementById("app");
   if (appContainer) {
     initRouter(appContainer);
+  }
+
+  if (CONFIG.useMockApi === false) {
+    await ensureCatalogLoaded();
   }
 }
 

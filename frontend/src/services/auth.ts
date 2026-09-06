@@ -74,7 +74,7 @@ export async function updateSessionUser(data: {
           return { ok: false, message: "E-mail já cadastrado." };
         }
       }
-      updateAdmin(admin.id, {
+      await updateAdmin(admin.id, {
         nome: data.nome,
         email: data.email,
         senha: data.novaSenha,

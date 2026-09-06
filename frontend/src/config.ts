@@ -1,6 +1,6 @@
 export const CONFIG = {
-  useMockApi: true,
-  apiBaseUrl: "http://localhost:3000/api",
+  useMockApi: import.meta.env.VITE_USE_MOCK_API === "true",
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? "/api",
   googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "",
   sessionKey: "maraca.session",
   appointmentsKey: "maraca.v2.appointments",

@@ -5,6 +5,7 @@ import {
   findAdminByEmail,
   isLastAdmin,
   listAdmins,
+  loadAdminsRemote,
   updateAdmin,
 } from "../services/admins.js";
 import { findUsuarioByEmail } from "../services/usuarios.js";
@@ -36,7 +37,8 @@ export function renderSuperusuario(container: HTMLElement): () => void {
     return fn;
   }
 
-  function renderList(): void {
+  async function renderList(): Promise<void> {
+    await loadAdminsRemote();
     const admins = listAdmins();
 
     content.innerHTML = `
@@ -106,9 +108,9 @@ export function renderSuperusuario(container: HTMLElement): () => void {
           danger: true,
         });
         if (!confirmed) return;
-        deleteAdmin(admin.id);
+        await deleteAdmin(admin.id);
         showToast("Administrador excluído.", "success");
-        renderList();
+        await renderList();
       };
       btn.addEventListener("click", handler);
       cleanupOn(() => btn.removeEventListener("click", handler));
@@ -206,19 +208,19 @@ export function renderSuperusuario(container: HTMLElement): () => void {
       }
 
       if (isEdit && admin) {
-        updateAdmin(admin.id, {
+        await updateAdmin(admin.id, {
           nome: name,
           email,
           senha: password.length > 0 ? password : undefined,
         });
         showToast("Administrador atualizado.", "success");
       } else {
-        createAdmin({ nome: name, email, senha: password });
+        await createAdmin({ nome: name, email, senha: password });
         showToast("Administrador cadastrado.", "success");
       }
 
       finish();
-      renderList();
+      await renderList();
     };
     form.addEventListener("submit", submitHandler);
 
@@ -236,7 +238,7 @@ export function renderSuperusuario(container: HTMLElement): () => void {
     openModal(overlay);
   }
 
-  renderList();
+  void renderList();
 
   return () => {
     cleanup();
