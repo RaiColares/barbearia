@@ -1,5 +1,5 @@
 import { google, sheets_v4 } from 'googleapis';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
   loadServiceAccountCredentials,
@@ -49,6 +49,7 @@ async function main(): Promise<void> {
   const hash = await bcrypt.hash('senha123', 10);
 
   const usuarios: CellValue[][] = [
+    [uuidv4(), 'super@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
     [uuidv4(), 'rafael@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
     [uuidv4(), 'marcos@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
     [uuidv4(), 'juliana@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
@@ -58,15 +59,16 @@ async function main(): Promise<void> {
   ];
 
   const funcionarios: CellValue[][] = [
-    [uuidv4(), usuarios[0][0], 'Rafael Silva', '(11) 99999-1111', 'barbeiro', 'Corte masculino', null, 'Especialista em degradê', true, nowISO(), nowISO()],
-    [uuidv4(), usuarios[1][0], 'Marcos Souza', '(11) 99999-2222', 'barbeiro', 'Barba e corte', null, 'Faz as melhores barbas', true, nowISO(), nowISO()],
-    [uuidv4(), usuarios[2][0], 'Juliana Costa', '(11) 99999-3333', 'recepcionista', null, null, null, true, nowISO(), nowISO()],
-    [uuidv4(), usuarios[3][0], 'Admin Maraca', '(11) 99999-4444', 'administrador', null, null, null, true, nowISO(), nowISO()],
+    [uuidv4(), usuarios[1][0], 'Rafael Silva', '(11) 99999-1111', 'barbeiro', 'Corte masculino', null, 'Especialista em degradê', true, nowISO(), nowISO()],
+    [uuidv4(), usuarios[2][0], 'Marcos Souza', '(11) 99999-2222', 'barbeiro', 'Barba e corte', null, 'Faz as melhores barbas', true, nowISO(), nowISO()],
+    [uuidv4(), usuarios[3][0], 'Juliana Costa', '(11) 99999-3333', 'recepcionista', null, null, null, true, nowISO(), nowISO()],
+    [uuidv4(), usuarios[4][0], 'Admin Maraca', '(11) 99999-4444', 'administrador', null, null, null, true, nowISO(), nowISO()],
+    [uuidv4(), usuarios[0][0], 'Super Maraca', '(11) 99999-5555', 'superusuario', null, null, null, true, nowISO(), nowISO()],
   ];
 
   const clientes: CellValue[][] = [
-    [uuidv4(), usuarios[4][0], 'Carlos Oliveira', '(11) 88888-1111', nowISO(), nowISO()],
-    [uuidv4(), usuarios[5][0], 'Ana Pereira', '(11) 88888-2222', nowISO(), nowISO()],
+    [uuidv4(), usuarios[5][0], 'Carlos Oliveira', '(11) 88888-1111', nowISO(), nowISO()],
+    [uuidv4(), usuarios[6][0], 'Ana Pereira', '(11) 88888-2222', nowISO(), nowISO()],
   ];
 
   const servicos: CellValue[][] = [
@@ -121,6 +123,7 @@ async function main(): Promise<void> {
   console.log(`   - ${horariosTrabalho.length} horários de trabalho`);
   console.log(`   - ${agendamentos.length} agendamentos`);
   console.log('\nCredenciais:');
+  console.log('   super@barbearia.com / senha123  (superusuario)');
   console.log('   admin@barbearia.com / senha123');
   console.log('   rafael@barbearia.com / senha123');
   console.log('   carlos@email.com / senha123');

@@ -14,7 +14,7 @@ const SCHEMA: SheetDef[] = [
     name: 'usuario',
     headers: [
       'id', 'email', 'senha_hash', 'tipo', 'google_id',
-      'avatar_url', 'created_at', 'updated_at',
+      'avatar_url', 'nome', 'telefone', 'professional_id', 'created_at', 'updated_at',
     ],
   },
   {
@@ -31,7 +31,7 @@ const SCHEMA: SheetDef[] = [
   {
     name: 'servico',
     headers: [
-      'id', 'nome', 'descricao', 'duracao_minutos', 'preco',
+      'id', 'nome', 'descricao', 'categoria', 'icon', 'duracao_minutos', 'preco',
       'ativo', 'created_at', 'updated_at',
     ],
   },
@@ -52,7 +52,7 @@ const SCHEMA: SheetDef[] = [
   {
     name: 'agendamento',
     headers: [
-      'id', 'cliente_id', 'funcionario_id', 'servico_id', 'data',
+      'id', 'code', 'cliente_id', 'funcionario_id', 'servico_id', 'data',
       'hora', 'status', 'observacao', 'created_at', 'updated_at',
     ],
   },
@@ -123,6 +123,32 @@ async function main(): Promise<void> {
   await sheets.spreadsheets.values.batchUpdate(batchParams);
 
   console.log('Cabeçalhos atualizados em todas as abas.');
+
+  // Garantir colunas novas em abas antigas (ex.: "code" no agendamento)
+  for (const def of SCHEMA) {
+    const existing = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${def.name}!A1:Z1`,
+      valueRenderOption: 'UNFORMATTED_VALUE',
+    });
+    const currentHeaders = existing.data.values?.[0]?.map((c: unknown) => String(c)) ?? [];
+    const missing = def.headers.filter((h) => !currentHeaders.includes(h));
+    if (missing.length > 0) {
+      const startCol = currentHeaders.length + 1;
+      const range = `${def.name}!${String.fromCharCode(64 + startCol)}1`;
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          majorDimension: 'ROWS',
+          values: [[missing[0]]],
+        },
+      });
+      console.log(`  Coluna "${missing[0]}" adicionada em "${def.name}".`);
+    }
+  }
+
   console.log('✅ Planilha inicializada com sucesso!');
 }
 

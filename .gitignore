@@ -1,5 +1,8 @@
 node_modules/
 .env
+.env.*
 dist/
+.vercel
 service-account.json
 config/service-account.json
+backend/dist/

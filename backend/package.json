@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "npx tsx src/server.ts",
+    "dev": "npx tsx src/index.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/index.js",
     "sheets:init": "npx tsx src/setup-sheets.ts",
     "sheets:seed": "npx tsx src/seed-sheets.ts"
   },
@@ -15,24 +15,28 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "google-auth-library": "^11.0.2",
     "googleapis": "^148.0.0",
+    "jsonwebtoken": "^9.0.3",
     "uuid": "^14.0.2",
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.4.0",
     "@types/uuid": "^11.0.0",
     "cross-env": "^10.1.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

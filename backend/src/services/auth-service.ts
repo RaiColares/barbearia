@@ -1,7 +1,9 @@
 import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
+import bcrypt from 'bcryptjs';
 import { ValidationError } from '../errors/ValidationError';
 import { ForbiddenError } from '../errors/ForbiddenError';
+import { NotFoundError } from '../errors/NotFoundError';
 import {
   findUsuarioByEmail,
   findUsuarioByGoogleId,
@@ -13,6 +15,7 @@ import {
   type UsuarioRow,
 } from '../repositories/auth-repository';
 import type { LoginResponseDTO, UsuarioDTO } from '../dtos/auth-dto';
+import { signAuthToken, AppRole } from '../utils/jwt';
 
 const DEFAULT_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 
@@ -54,6 +57,14 @@ export function validarTokenGoogle(idToken: string): Promise<GoogleProfile> {
     });
 }
 
+export function mapearCargoParaRole(cargo: string | null | undefined, tipo: string | null | undefined): AppRole {
+  if (tipo === 'cliente') return 'cliente';
+  if (cargo === 'superusuario') return 'superusuario';
+  if (cargo === 'administrador') return 'admin';
+  if (cargo === 'recepcionista') return 'recepcionista';
+  return 'profissional';
+}
+
 function buildUsuarioDTO(usuario: UsuarioRow, nome: string | null, cargo?: string | null): UsuarioDTO {
   return {
     id: usuario.id,
@@ -65,8 +76,16 @@ function buildUsuarioDTO(usuario: UsuarioRow, nome: string | null, cargo?: strin
   };
 }
 
-function gerarToken(): string {
-  return 'tok_' + crypto.randomBytes(24).toString('hex');
+function gerarToken(usuario: UsuarioRow, nome: string | null, cargo: string | null | undefined): string {
+  const role = mapearCargoParaRole(cargo, usuario.tipo);
+  return signAuthToken({
+    sub: usuario.id,
+    email: usuario.email,
+    role,
+    nome,
+    cargo: cargo || null,
+    tipo: usuario.tipo,
+  });
 }
 
 export async function autenticarComGoogle(idToken: string): Promise<LoginResponseDTO> {
@@ -90,19 +109,50 @@ export async function autenticarComGoogle(idToken: string): Promise<LoginRespons
     }
   }
 
-  let nome: string | null = null;
-  let cargo: string | null = null;
-
-  if (usuario.tipo === 'cliente') {
-    nome = await obterClienteNome(usuario.id);
-  } else {
-    const funcionario = await obterFuncionarioNome(usuario.id);
-    nome = funcionario?.nome ?? null;
-    cargo = usuario.tipo === 'funcionario' ? (funcionario?.cargo ?? null) : null;
-  }
+  const { nome, cargo } = await obterNomeECargo(usuario);
 
   return {
-    token: gerarToken(),
+    token: gerarToken(usuario, nome, cargo),
     user: buildUsuarioDTO(usuario, nome, cargo),
   };
+}
+
+async function obterNomeECargo(usuario: UsuarioRow): Promise<{ nome: string | null; cargo: string | null }> {
+  if (usuario.tipo === 'cliente') {
+    const nome = await obterClienteNome(usuario.id);
+    return { nome, cargo: null };
+  }
+  const funcionario = await obterFuncionarioNome(usuario.id);
+  return { nome: funcionario?.nome ?? null, cargo: funcionario?.cargo ?? null };
+}
+
+export async function autenticarComSenha(email: string, senha: string): Promise<LoginResponseDTO> {
+  if (!email || !senha) {
+    throw new ValidationError('E-mail e senha obrigatórios');
+  }
+
+  const usuario = await findUsuarioByEmail(email);
+  if (!usuario || !usuario.senha_hash) {
+    throw new NotFoundError('Credenciais inválidas');
+  }
+
+  const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
+  if (!senhaValida) {
+    throw new ForbiddenError('Credenciais inválidas');
+  }
+
+  const { nome, cargo } = await obterNomeECargo(usuario);
+
+  return {
+    token: gerarToken(usuario, nome, cargo),
+    user: buildUsuarioDTO(usuario, nome, cargo),
+  };
+}
+
+export function gerarSenhaHash(senha: string): Promise<string> {
+  return bcrypt.hash(senha, 10);
+}
+
+export function gerarTokenInterno(): string {
+  return 'tok_' + crypto.randomBytes(24).toString('hex');
 }
