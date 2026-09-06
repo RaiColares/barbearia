@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAuthToken, JwtPayload } from '../utils/jwt';
 import { ForbiddenError } from '../errors/ForbiddenError';
+import { UnauthorizedError } from '../errors/UnauthorizedError';
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;
@@ -9,7 +10,7 @@ export interface AuthRequest extends Request {
 export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
-    next(new ForbiddenError('Autenticação necessária'));
+    next(new UnauthorizedError('Autenticação necessária'));
     return;
   }
   const token = header.slice('Bearer '.length).trim();
@@ -18,7 +19,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
     (req as AuthRequest).user = payload;
     next();
   } catch {
-    next(new ForbiddenError('Sessão inválida ou expirada'));
+    next(new UnauthorizedError('Sessão inválida ou expirada'));
   }
 }
 
@@ -26,7 +27,7 @@ export function requireRole(allowed: string[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     const user = (req as AuthRequest).user;
     if (!user) {
-      next(new ForbiddenError('Autenticação necessária'));
+      next(new UnauthorizedError('Autenticação necessária'));
       return;
     }
     if (!allowed.includes(user.role)) {

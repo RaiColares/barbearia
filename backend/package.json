@@ -22,7 +22,6 @@
     "google-auth-library": "^11.0.2",
     "googleapis": "^148.0.0",
     "jsonwebtoken": "^9.0.3",
-    "uuid": "^14.0.2",
     "zod": "^4.5.4"
   },
   "devDependencies": {
@@ -30,7 +29,6 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.4.0",
-    "@types/uuid": "^11.0.0",
     "cross-env": "^10.1.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.13",

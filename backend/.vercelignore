@@ -1,0 +1,11 @@
+.env
+.env.*
+!*.example
+config/service-account.json
+service-account.json
+**/service-account.json
+.vercel
+node_modules
+src/reparar-agendamentos.ts
+src/criar-superusuario.ts
+src/seed-sheets.ts

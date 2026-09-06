@@ -1,6 +1,6 @@
 import { google, sheets_v4 } from 'googleapis';
 import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import {
   loadServiceAccountCredentials,
   buildPrivateKey,
@@ -49,51 +49,51 @@ async function main(): Promise<void> {
   const hash = await bcrypt.hash('senha123', 10);
 
   const usuarios: CellValue[][] = [
-    [uuidv4(), 'super@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
-    [uuidv4(), 'rafael@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
-    [uuidv4(), 'marcos@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
-    [uuidv4(), 'juliana@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
-    [uuidv4(), 'admin@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
-    [uuidv4(), 'carlos@email.com', hash, 'cliente', null, null, nowISO(), nowISO()],
-    [uuidv4(), 'ana@email.com', hash, 'cliente', null, null, nowISO(), nowISO()],
+    [randomUUID(), 'super@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
+    [randomUUID(), 'rafael@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
+    [randomUUID(), 'marcos@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
+    [randomUUID(), 'juliana@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
+    [randomUUID(), 'admin@barbearia.com', hash, 'funcionario', null, null, nowISO(), nowISO()],
+    [randomUUID(), 'carlos@email.com', hash, 'cliente', null, null, nowISO(), nowISO()],
+    [randomUUID(), 'ana@email.com', hash, 'cliente', null, null, nowISO(), nowISO()],
   ];
 
   const funcionarios: CellValue[][] = [
-    [uuidv4(), usuarios[1][0], 'Rafael Silva', '(11) 99999-1111', 'barbeiro', 'Corte masculino', null, 'Especialista em degradê', true, nowISO(), nowISO()],
-    [uuidv4(), usuarios[2][0], 'Marcos Souza', '(11) 99999-2222', 'barbeiro', 'Barba e corte', null, 'Faz as melhores barbas', true, nowISO(), nowISO()],
-    [uuidv4(), usuarios[3][0], 'Juliana Costa', '(11) 99999-3333', 'recepcionista', null, null, null, true, nowISO(), nowISO()],
-    [uuidv4(), usuarios[4][0], 'Admin Maraca', '(11) 99999-4444', 'administrador', null, null, null, true, nowISO(), nowISO()],
-    [uuidv4(), usuarios[0][0], 'Super Maraca', '(11) 99999-5555', 'superusuario', null, null, null, true, nowISO(), nowISO()],
+    [randomUUID(), usuarios[1][0], 'Rafael Silva', '(11) 99999-1111', 'barbeiro', 'Corte masculino', null, 'Especialista em degradê', true, nowISO(), nowISO()],
+    [randomUUID(), usuarios[2][0], 'Marcos Souza', '(11) 99999-2222', 'barbeiro', 'Barba e corte', null, 'Faz as melhores barbas', true, nowISO(), nowISO()],
+    [randomUUID(), usuarios[3][0], 'Juliana Costa', '(11) 99999-3333', 'recepcionista', null, null, null, true, nowISO(), nowISO()],
+    [randomUUID(), usuarios[4][0], 'Admin Maraca', '(11) 99999-4444', 'administrador', null, null, null, true, nowISO(), nowISO()],
+    [randomUUID(), usuarios[0][0], 'Super Maraca', '(11) 99999-5555', 'superusuario', null, null, null, true, nowISO(), nowISO()],
   ];
 
   const clientes: CellValue[][] = [
-    [uuidv4(), usuarios[5][0], 'Carlos Oliveira', '(11) 88888-1111', nowISO(), nowISO()],
-    [uuidv4(), usuarios[6][0], 'Ana Pereira', '(11) 88888-2222', nowISO(), nowISO()],
+    [randomUUID(), usuarios[5][0], 'Carlos Oliveira', '(11) 88888-1111', nowISO(), nowISO()],
+    [randomUUID(), usuarios[6][0], 'Ana Pereira', '(11) 88888-2222', nowISO(), nowISO()],
   ];
 
   const servicos: CellValue[][] = [
-    [uuidv4(), 'Corte masculino', 'Corte tesoura ou máquina', 30, 45.0, true, nowISO(), nowISO()],
-    [uuidv4(), 'Barba', 'Barba com navalha e toalha quente', 20, 30.0, true, nowISO(), nowISO()],
-    [uuidv4(), 'Corte + Barba', 'Combo corte masculino e barba', 45, 70.0, true, nowISO(), nowISO()],
-    [uuidv4(), 'Pigmentação', 'Pigmentação capilar e barba', 40, 80.0, true, nowISO(), nowISO()],
-    [uuidv4(), 'Sobrancelha', 'Design de sobrancelha', 15, 20.0, true, nowISO(), nowISO()],
+    [randomUUID(), 'Corte masculino', 'Corte tesoura ou máquina', 30, 45.0, true, nowISO(), nowISO()],
+    [randomUUID(), 'Barba', 'Barba com navalha e toalha quente', 20, 30.0, true, nowISO(), nowISO()],
+    [randomUUID(), 'Corte + Barba', 'Combo corte masculino e barba', 45, 70.0, true, nowISO(), nowISO()],
+    [randomUUID(), 'Pigmentação', 'Pigmentação capilar e barba', 40, 80.0, true, nowISO(), nowISO()],
+    [randomUUID(), 'Sobrancelha', 'Design de sobrancelha', 15, 20.0, true, nowISO(), nowISO()],
   ];
 
   const horariosTrabalho: CellValue[][] = [];
   for (const func of funcionarios) {
     for (let dia = 1; dia <= 6; dia++) {
       horariosTrabalho.push([
-        uuidv4(), func[0], dia, '09:00', '19:00', true, nowISO(), nowISO(),
+        randomUUID(), func[0], dia, '09:00', '19:00', true, nowISO(), nowISO(),
       ]);
     }
   }
 
   const agendamentos: CellValue[][] = [
-    [uuidv4(), clientes[0][0], funcionarios[0][0], servicos[2][0], '2026-09-08', '10:00', 'confirmado', null, nowISO(), nowISO()],
-    [uuidv4(), clientes[1][0], funcionarios[1][0], servicos[0][0], '2026-09-08', '14:00', 'pendente', null, nowISO(), nowISO()],
-    [uuidv4(), clientes[0][0], funcionarios[0][0], servicos[1][0], '2026-09-09', '09:00', 'pendente', 'Barba cheia', nowISO(), nowISO()],
-    [uuidv4(), clientes[1][0], funcionarios[0][0], servicos[3][0], '2026-09-09', '11:00', 'confirmado', null, nowISO(), nowISO()],
-    [uuidv4(), clientes[0][0], funcionarios[1][0], servicos[4][0], '2026-09-10', '16:00', 'pendente', null, nowISO(), nowISO()],
+    [randomUUID(), clientes[0][0], funcionarios[0][0], servicos[2][0], '2026-09-08', '10:00', 'confirmado', null, nowISO(), nowISO()],
+    [randomUUID(), clientes[1][0], funcionarios[1][0], servicos[0][0], '2026-09-08', '14:00', 'pendente', null, nowISO(), nowISO()],
+    [randomUUID(), clientes[0][0], funcionarios[0][0], servicos[1][0], '2026-09-09', '09:00', 'pendente', 'Barba cheia', nowISO(), nowISO()],
+    [randomUUID(), clientes[1][0], funcionarios[0][0], servicos[3][0], '2026-09-09', '11:00', 'confirmado', null, nowISO(), nowISO()],
+    [randomUUID(), clientes[0][0], funcionarios[1][0], servicos[4][0], '2026-09-10', '16:00', 'pendente', null, nowISO(), nowISO()],
   ];
 
   console.log('Inserindo dados...');

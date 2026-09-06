@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import getDb from '../database/connection';
 import type { SheetRow } from '../database/sheets-client';
 
@@ -51,7 +51,7 @@ export async function criarUsuarioGoogle(data: {
   avatarUrl?: string | null;
 }): Promise<UsuarioRow> {
   const db = getDb();
-  const id = uuidv4();
+  const id = randomUUID();
   const now = nowISO();
   const headers = await db.getHeaders(SHEET_USUARIO);
 
@@ -112,7 +112,7 @@ export async function criarCliente(data: {
   nome: string;
 }): Promise<void> {
   const db = getDb();
-  const id = uuidv4();
+  const id = randomUUID();
   const now = nowISO();
   const headers = await db.getHeaders(SHEET_CLIENTE);
 

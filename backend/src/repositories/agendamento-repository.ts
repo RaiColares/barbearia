@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import getDb from '../database/connection';
 import { SheetsRepository, InsertInput } from '../database/repository';
 import type { SheetRow } from '../database/sheets-client';
@@ -112,7 +112,7 @@ export class AgendamentoRepository extends SheetsRepository {
       (await this.findAll()).map((r) => String(r.code ?? '')),
     );
     const code = generateCode(existing);
-    const id = uuidv4();
+    const id = randomUUID();
     const now = new Date().toISOString();
 
     const values: InsertInput = {

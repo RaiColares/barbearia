@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import {
   loadServiceAccountCredentials,
   buildPrivateKey,
@@ -43,7 +43,7 @@ async function main(): Promise<void> {
   }
 
   const hash = await bcrypt.hash(senha, 10);
-  const usuarioId = uuidv4();
+  const usuarioId = randomUUID();
   const now = nowISO();
 
   await sheets.spreadsheets.values.append({
@@ -55,7 +55,7 @@ async function main(): Promise<void> {
     },
   });
 
-  const funcionarioId = uuidv4();
+  const funcionarioId = randomUUID();
   await sheets.spreadsheets.values.append({
     spreadsheetId,
     range: `${SHEET_FUNCIONARIO}!A:K`,

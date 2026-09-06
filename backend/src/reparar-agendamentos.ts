@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import {
   loadServiceAccountCredentials,
   buildPrivateKey,
@@ -63,11 +63,11 @@ async function main(): Promise<void> {
   const existing = new Set<string>();
 
   const rows: Value[][] = [
-    [uuidv4(), generateCode(existing), cliente[0], funcIds[0], servIds[2], '2026-09-08', '10:00', 'confirmado', '', nowISO(), nowISO()],
-    [uuidv4(), generateCode(existing), cliente[1], funcIds[1], servIds[0], '2026-09-08', '14:00', 'pendente', '', nowISO(), nowISO()],
-    [uuidv4(), generateCode(existing), cliente[0], funcIds[0], servIds[1], '2026-09-09', '09:00', 'pendente', 'Barba cheia', nowISO(), nowISO()],
-    [uuidv4(), generateCode(existing), cliente[1], funcIds[0], servIds[3], '2026-09-09', '11:00', 'confirmado', '', nowISO(), nowISO()],
-    [uuidv4(), generateCode(existing), cliente[0], funcIds[1], servIds[4], '2026-09-10', '16:00', 'pendente', '', nowISO(), nowISO()],
+    [randomUUID(), generateCode(existing), cliente[0], funcIds[0], servIds[2], '2026-09-08', '10:00', 'confirmado', '', nowISO(), nowISO()],
+    [randomUUID(), generateCode(existing), cliente[1], funcIds[1], servIds[0], '2026-09-08', '14:00', 'pendente', '', nowISO(), nowISO()],
+    [randomUUID(), generateCode(existing), cliente[0], funcIds[0], servIds[1], '2026-09-09', '09:00', 'pendente', 'Barba cheia', nowISO(), nowISO()],
+    [randomUUID(), generateCode(existing), cliente[1], funcIds[0], servIds[3], '2026-09-09', '11:00', 'confirmado', '', nowISO(), nowISO()],
+    [randomUUID(), generateCode(existing), cliente[0], funcIds[1], servIds[4], '2026-09-10', '16:00', 'pendente', '', nowISO(), nowISO()],
   ];
 
   // Limpar aba agendamento (após header)
