@@ -93,13 +93,17 @@ curl http://localhost:3000/api/health
 
 | Aba | Colunas |
 |-----|---------|
-| `usuario` | id, email, senha_hash, tipo, google_id, avatar_url, created_at, updated_at |
+| `usuario` | id, email, senha_hash, tipo, google_id, avatar_url, nome, telefone, professional_id, created_at, updated_at |
 | `cliente` | id, usuario_id, nome, telefone, created_at, updated_at |
 | `funcionario` | id, usuario_id, nome, telefone, cargo, especialidade, foto, descricao, ativo, created_at, updated_at |
-| `servico` | id, nome, descricao, duracao_minutos, preco, ativo, created_at, updated_at |
+| `servico` | id, nome, descricao, categoria, icon, duracao_minutos, preco, ativo, created_at, updated_at |
 | `horario_trabalho` | id, funcionario_id, dia_semana, hora_inicio, hora_fim, ativo, created_at, updated_at |
 | `horario_excecao` | id, funcionario_id, data, hora_inicio, hora_fim, tipo, motivo, created_at, updated_at |
-| `agendamento` | id, cliente_id, funcionario_id, servico_id, data, hora, status, observacao, created_at, updated_at |
+| `agendamento` | id, code, cliente_id, funcionario_id, servico_id, data, hora, status, observacao, created_at, updated_at |
+
+> **Credenciais de login** (`email` + `senha_hash`) são centralizadas na aba `usuario`; as abas `cliente` e `funcionario` guardam apenas o perfil, vinculado por `usuario_id`. O comando `npm run sheets:init` (`setup-sheets.ts`) cria abas e atualiza cabeçalhos (adicionar colunas posteriormente é não destrutivo).
+
+---
 
 ---
 
@@ -120,10 +124,13 @@ curl http://localhost:3000/api/health
 
 | Papel | Email | Senha |
 |-------|-------|-------|
+| Superusuário | `super@maraca.com` | `maraca123` |
 | Administrador | `admin@barbearia.com` | `senha123` |
 | Barbeiro | `rafael@barbearia.com` | `senha123` |
 | Recepcionista | `juliana@barbearia.com` | `senha123` |
 | Cliente | `carlos@email.com` | `senha123` |
+
+**Superusuário**: criado via `criar-superusuario.ts` (idempotente por e-mail, usa `SUPER_EMAIL`/`SUPER_SENHA`/`SUPER_NOME`). Login retorna papel `superusuario` e a tela de superusuário permite criar outros Administradores pelo `#/superusuario`. Os usuários demo restantes têm senha padrão `senha123`.
 
 ---
 
@@ -140,12 +147,21 @@ backend/src/
 │   └── servico-repository.ts
 ├── setup-sheets.ts         # Script: cria abas + cabeçalhos
 ├── seed-sheets.ts          # Script: popula dados demo
+├── criar-superusuario.ts   # Script: cria o superusuário (super@maraca.com)
 └── server.ts               # Express app
 ```
 
 ---
 
-## 8. Notas importantes
+## 8. Login com Google (OAuth)
+
+- Usa fluxo **popup** do Google Identity Services (só `Client ID`; não precisa de `secret` nem redirect configurado no código).
+- Variáveis: backend `GOOGLE_CLIENT_ID`; frontend `VITE_GOOGLE_CLIENT_ID` (precisam ser embarcadas no build do Vite).
+- No Google Cloud Console (OAuth consent screen): adicionar as **origens JS autorizadas** `https://barbearia-frontend-ten.vercel.app` (produção) e `http://localhost:5173` (dev local) e incluir a conta usada na demo nos **test users**.
+
+---
+
+## 9. Notas importantes
 
 - **Integridade referencial** (FK) e **constraints** (UNIQUE, CHECK) são implementadas **no código**, pois Google Sheets não oferece essas garantias.
 - **Concorrência**: A checagem de duplicidade de agendamento deve ser feita no nível da aplicação com transação/sequência.
