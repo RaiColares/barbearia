@@ -956,75 +956,94 @@ export function renderManage(container: HTMLElement): () => void {
           <button type="button" class="modal__close" data-close aria-label="Fechar">${icon("x", 18)}</button>
         </div>
         <form class="modal__body" id="svc-form" novalidate>
-          <div class="form-grid">
-            <div class="field">
-              <label class="field__label" for="svc-name">Nome *</label>
-              <input type="text" id="svc-name" value="${escapeHtml(service?.name ?? "")}" maxlength="60" required>
-              <span class="field__error">Informe o nome.</span>
-            </div>
-            <div class="field">
-              <label class="field__label" for="svc-category">Categoria</label>
-              <input type="text" id="svc-category" list="svc-categories" value="${escapeHtml(service?.category ?? "")}" maxlength="30">
-              <datalist id="svc-categories">
-                ${categories.map((c) => `<option value="${escapeHtml(c)}">`).join("")}
-              </datalist>
-              <span class="field__hint">Digite um nome novo para adicionar categoria</span>
-            </div>
+          <div class="field">
+            <label class="field__label" for="svc-name">Nome do serviço</label>
+            <input type="text" id="svc-name" placeholder="Ex.: Corte Premium" maxlength="50" value="${escapeHtml(service?.name ?? "")}" required>
+          </div>
+          <div class="field">
+            <label class="field__label" for="svc-category">Categoria</label>
+            <select id="svc-category" required>
+              <option value="" disabled ${!isEdit ? "selected" : ""}>Selecione uma categoria</option>
+              ${categories
+                .map(
+                  (c) =>
+                    `<option value="${escapeHtml(c)}" ${service?.category === c ? "selected" : ""}>${escapeHtml(c)}</option>`,
+                )
+                .join("")}
+              <option value="__new__" ${isEdit && service && !categories.includes(service.category) ? "selected" : ""}>+ Adicionar Nova Categoria</option>
+            </select>
+          </div>
+          <div class="field" id="svc-new-category-field" hidden>
+            <label class="field__label" for="svc-new-category">Nova categoria</label>
+            <input type="text" id="svc-new-category" placeholder="Digite a nova categoria" maxlength="30">
           </div>
           <div class="form-grid">
             <div class="field">
               <label class="field__label" for="svc-duration">Duração (min) *</label>
-              <input type="number" id="svc-duration" value="${service?.durationMin ?? 30}" min="10" step="5" required>
+              <input type="number" id="svc-duration" min="10" max="240" step="5" placeholder="45" value="${service ? String(service.durationMin) : ""}" required>
             </div>
             <div class="field">
               <label class="field__label" for="svc-price">Preço (R$) *</label>
-              <input type="number" id="svc-price" value="${service?.price ?? 0}" min="0" step="0.5" required>
+              <input type="number" id="svc-price" min="1" max="9999" step="0.01" placeholder="55.00" value="${service ? String(service.price) : ""}" required>
             </div>
-            <div class="field">
-              <label class="field__label" for="svc-icon">Ícone</label>
-              <select id="svc-icon">
-                ${SERVICE_ICONS.map(
-                  (o) => `<option value="${o.value}" ${service?.icon === o.value ? "selected" : ""}>${o.label}</option>`,
-                ).join("")}
-              </select>
-            </div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="svc-desc">Descrição</label>
+            <textarea id="svc-desc" rows="3" maxlength="200" placeholder="Descreva o serviço...">${escapeHtml(service?.description ?? "")}</textarea>
           </div>
           <div class="modal__footer">
             <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
-            <button type="submit" class="btn btn--primary">${isEdit ? "Salvar" : "Criar serviço"}</button>
+            <button type="submit" class="btn btn--primary">Salvar serviço</button>
           </div>
         </form>
       </div>
     `;
 
     const form = overlay.querySelector<HTMLFormElement>("#svc-form")!;
+    const categorySelect = overlay.querySelector<HTMLSelectElement>("#svc-category")!;
+    const newCategoryField = overlay.querySelector<HTMLDivElement>("#svc-new-category-field")!;
     const finish = (): void => {
       closeModal(overlay);
       window.setTimeout(() => overlay.remove(), 300);
     };
 
+    const atualizarCampoNovaCategoria = (): void => {
+      newCategoryField.hidden = categorySelect.value !== "__new__";
+    };
+    categorySelect.addEventListener("change", atualizarCampoNovaCategoria);
+    atualizarCampoNovaCategoria();
+
     const submitHandler = (event: Event): void => {
       event.preventDefault();
       const name = ($("#svc-name", overlay) as HTMLInputElement).value.trim();
+      let category = categorySelect.value;
       const duration = Number(($("#svc-duration", overlay) as HTMLInputElement).value);
       const price = Number(($("#svc-price", overlay) as HTMLInputElement).value);
-      if (name.length < 3) {
-        showToast("Informe o nome do serviço.", "error");
+      const description = ($("#svc-desc", overlay) as HTMLTextAreaElement).value.trim();
+
+      if (category === "__new__") {
+        const newCategory = ($("#svc-new-category", overlay) as HTMLInputElement).value.trim();
+        if (!newCategory) {
+          showToast("Digite a nova categoria.", "error");
+          return;
+        }
+        if (!loadCategories().includes(newCategory)) {
+          saveCategories([...loadCategories(), newCategory]);
+        }
+        category = newCategory;
+      }
+      if (!category) {
+        showToast("Selecione uma categoria ou cadastre uma nova.", "error");
         return;
       }
-      if (!Number.isFinite(duration) || duration < 10 || !Number.isFinite(price) || price < 0) {
-        showToast("Verifique duração e preço.", "error");
+      if (!name || !Number.isFinite(duration) || duration < 10 || duration > 240 || !Number.isFinite(price) || price <= 0) {
+        showToast("Preencha os campos do serviço corretamente.", "error");
         return;
       }
-      const category = ($("#svc-category", overlay) as HTMLInputElement).value.trim();
-      const iconSel = ($("#svc-icon", overlay) as HTMLSelectElement).value as ServiceIcon;
-      const description = service?.description ?? "";
-      if (category && !loadCategories().includes(category)) {
-        saveCategories([...loadCategories(), category]);
-      }
+      const iconSel: ServiceIcon = isEdit && service ? service.icon : "scissors";
       if (isEdit && service) {
         servicesCache = servicesCache.map((s) =>
-          s.id === service.id ? { ...s, name, category, durationMin: duration, price, icon: iconSel, description } : s,
+          s.id === service.id ? { ...s, name, category, durationMin: duration, price, description } : s,
         );
       } else {
         servicesCache = [
@@ -1458,10 +1477,3 @@ export function renderManage(container: HTMLElement): () => void {
     cleanupPanel();
   };
 }
-
-const SERVICE_ICONS: Array<{ value: ServiceIcon; label: string }> = [
-  { value: "scissors", label: "Tesoura" },
-  { value: "beard", label: "Barba" },
-  { value: "layers", label: "Camadas" },
-  { value: "sparkle", label: "Estrela" },
-];

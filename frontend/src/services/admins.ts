@@ -136,7 +136,7 @@ export async function createAdmin(data: { nome: string; email: string; senha: st
       nome: admin.nome,
       email: admin.email,
       tipo: "admin",
-      password: "admin",
+      password: data.senha,
     }),
   });
   const mapped = mapFromAPI(created);
