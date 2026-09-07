@@ -151,10 +151,18 @@ export function renderLanding(container: HTMLElement): () => void {
               <a href="https://wa.me/5591999999999" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="WhatsApp da Barbearia Maracá"><i class='bx bxl-whatsapp'></i></a>
             </div>
           </div>
-          <div class="map-placeholder" role="img" aria-label="Mapa interativo da localização da Barbearia Maracá">
-            <span class="map-placeholder__pin"><i class='bx bx-map'></i></span>
-            <strong>Mapa Interativo</strong>
-            <small>Integração com Google Maps será conectada pelo time de back-end.</small>
+          <div class="map-placeholder">
+            <iframe
+              class="map-placeholder__frame"
+              src="https://www.google.com/maps/embed?pb=!1m10!1m8!1m3!1d15954.152330033818!2d-48.44874795!3d-1.4515032499999998!3m2!1i1024!2i768!4f13.1!5e0!3m2!1spt-BR!2sbr!4v1788747588702!5m2!1spt-BR!2sbr"
+              width="600"
+              height="450"
+              style="border:0;"
+              allowfullscreen=""
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              title="Mapa interativo da localização da Barbearia Maracá"
+            ></iframe>
           </div>
         </div>
       </div>
