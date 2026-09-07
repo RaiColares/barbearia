@@ -7,14 +7,15 @@ import {
   atualizarStatus,
   reagendar,
 } from '../controllers/agendamento-controller';
+import { requireAuth } from '../middlewares/auth';
 
 const agendamentoRoutes = Router();
 
-agendamentoRoutes.get('/', listar);
 agendamentoRoutes.post('/', criar);
-agendamentoRoutes.get('/:code', buscarPorCode);
-agendamentoRoutes.patch('/:code', atualizarStatus);
-agendamentoRoutes.patch('/:code/cancelar', cancelar);
-agendamentoRoutes.patch('/:code/reagendar', reagendar);
+agendamentoRoutes.get('/', requireAuth, listar);
+agendamentoRoutes.get('/:code', requireAuth, buscarPorCode);
+agendamentoRoutes.patch('/:code', requireAuth, atualizarStatus);
+agendamentoRoutes.patch('/:code/cancelar', requireAuth, cancelar);
+agendamentoRoutes.patch('/:code/reagendar', requireAuth, reagendar);
 
 export default agendamentoRoutes;

@@ -48,6 +48,11 @@ export class ProfissionalRepository extends SheetsRepository {
     return match ? mapProfissional(match.record) : null;
   }
 
+  async buscarPorUsuarioId(usuarioId: string): Promise<ProfissionalDTO | null> {
+    const match = await this.findBy((r) => String(r.usuario_id ?? '') === usuarioId);
+    return match ? mapProfissional(match.record) : null;
+  }
+
   async criar(dados: Omit<ProfissionalDTO, 'id'>): Promise<ProfissionalDTO> {
     return this.criarComId(undefined, dados);
   }

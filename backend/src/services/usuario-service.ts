@@ -10,6 +10,17 @@ export interface CriarUsuarioInput extends Omit<UsuarioDTO, 'id'> {
   password?: string;
 }
 
+const CARGO_POR_TIPO: Record<string, string> = {
+  admin: 'administrador',
+  administrador: 'administrador',
+  recepcao: 'recepcionista',
+  recepcionista: 'recepcionista',
+  superuser: 'superusuario',
+  superusuario: 'superusuario',
+  barbeiro: 'barbeiro',
+  profissional: 'barbeiro',
+};
+
 export async function obterUsuarios(): Promise<UsuarioDTO[]> {
   const repo = await criarRepoUsuario();
   return repo.listarDTOs();
@@ -21,11 +32,26 @@ export async function criarUsuario(dados: CriarUsuarioInput): Promise<UsuarioDTO
   const updates: InsertInput = {
     email: dados.email.trim().toLowerCase(),
     tipo: tipoBackend || 'cliente',
+    nome: dados.nome?.trim() || null,
+    telefone: dados.telefone ?? null,
     senha_hash: dados.password ? await gerarSenhaHash(dados.password) : null,
   };
   const id = await repo.criar(updates);
   if (dados.professionalId) {
     await atualizarVinculoFuncionario(dados.professionalId, id);
+  } else {
+    const cargo = CARGO_POR_TIPO[tipoBackend ?? ''];
+    if (cargo) {
+      const repoProfissional = await criarRepoProfissional();
+      const nome = dados.nome?.trim() || String(dados.email).split('@')[0] || 'Usuário';
+      const criado = await repoProfissional.criar({
+        name: nome,
+        role: cargo,
+        category: '',
+        active: true,
+      });
+      await repoProfissional.vincularUsuario(criado.id, id);
+    }
   }
   const dto = (await repo.listarDTOs()).find(u => u.id === id) ?? null;
   if (!dto) throw new Error('Falha ao criar usuário');
